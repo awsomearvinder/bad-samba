@@ -1,0 +1,25 @@
+pipeline:
+  build:
+    image: rust:1.69-slim
+    commands:
+      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo build
+
+  test:
+    image: rust:1.69-slim
+    commands:
+      - cargo test
+
+  lint:
+    image: rust:1.69-slim
+    commands:
+      - rustup component add rustfmt clippy
+      - cargo fmt -- --check --files-with-diff
+      - cargo clippy --no-deps
+
+  # test with big-endian
+  miri:
+    image: rust:1.69-slim
+    commands:
+      - rustup toolchain install nightly --component miri
+      - rustup override set nightly
+      - cargo miri test --target mips64-unknown-linux-gnuabi64
