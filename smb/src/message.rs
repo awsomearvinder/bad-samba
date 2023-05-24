@@ -92,7 +92,7 @@ mod tests {
         header[3] = b'B';
         assert_eq!(
             SmbMessageHeader::try_parse(&header).unwrap().1.protocol_id,
-            u32::from_le(0x424D53FE)
+            u32::from_le_bytes([0xFE, b'S', b'M', b'B'])
         );
     }
     #[test]
@@ -109,7 +109,7 @@ mod tests {
         header[32] = 0xFF;
         assert_eq!(
             SmbMessageHeader::try_parse(&header).unwrap().1.async_id,
-            std::num::NonZeroU32::new(0xFF)
+            std::num::NonZeroU32::new(u32::from_le_bytes([0xFF, 0, 0, 0]))
         );
     }
 }
