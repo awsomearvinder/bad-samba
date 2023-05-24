@@ -97,7 +97,7 @@ mod tests {
     }
     #[test]
     fn no_async_id() {
-        let mut header = [0; 64];
+        let header = [0; 64];
         assert_eq!(
             SmbMessageHeader::try_parse(&header).unwrap().1.async_id,
             None
