@@ -23,10 +23,7 @@ impl SmbMessageHeader {
     pub fn try_parse(
         body: &[u8],
     ) -> nom::IResult<&[u8], SmbMessageHeader, nom::error::Error<&[u8]>> {
-        // get u32 with context
-        let c_u32 = |ctx, body| context(ctx, super::get_u32_le)(body);
-        // get u16 with context
-        let c_u16 = |ctx, body| context(ctx, super::get_u16_le)(body);
+        use super::{c_u16, c_u32};
 
         let (remaining, protocol_id) = c_u32("Failed to get protocol id", body)?;
         let (remaining, header_size) = c_u16("Failed to get message header size", remaining)?;
