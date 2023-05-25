@@ -1,5 +1,5 @@
 use nom::bytes::complete as bytes;
-use nom::error::context;
+use nom::Parser;
 
 #[derive(Debug, PartialEq)]
 pub struct SmbMessageHeader {
@@ -11,19 +11,42 @@ pub struct SmbMessageHeader {
     pub credit_request_response: u16,
     pub flags: u32,
     pub next_command: u32,
-    pub message_id: u32,
-    pub async_id: Option<std::num::NonZeroU32>,
-    /// Not useful for async
-    pub tree_id: u32,
-    pub session_id: u32,
-    pub signature: u32,
+    pub message_id: u64,
+    pub variant: SmbMessageHeaderVariant,
+    pub session_id: u64,
+    pub signature: u128,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum SmbMessageHeaderVariant {
+    Sync { tree_id: u32 },
+    Async { id: std::num::NonZeroU64 },
 }
 
 impl SmbMessageHeader {
+    fn parse_variant<'a>(
+        body: &'a [u8],
+    ) -> nom::IResult<&[u8], SmbMessageHeaderVariant, nom::error::Error<&[u8]>> {
+        nom::branch::alt((
+            |body: &'a [u8]| {
+                let (remaining, _) = bytes::tag([0; 4])(body)?;
+                let (remaining, tree_id) = bytes::take(4usize)(remaining)?;
+                Ok((
+                    remaining,
+                    SmbMessageHeaderVariant::Sync {
+                        tree_id: u32::from_le_bytes(tree_id.try_into().unwrap()),
+                    },
+                ))
+            },
+            bytes::take(8usize).map(|id: &[u8]| SmbMessageHeaderVariant::Async {
+                id: std::num::NonZeroU64::new(u64::from_le_bytes(id.try_into().unwrap())).unwrap(),
+            }),
+        ))(body)
+    }
     pub fn try_parse(
         body: &[u8],
     ) -> nom::IResult<&[u8], SmbMessageHeader, nom::error::Error<&[u8]>> {
-        use super::{c_u16, c_u32};
+        use super::*;
 
         let (remaining, protocol_id) = c_u32("Failed to get protocol id", body)?;
         let (remaining, header_size) = c_u16("Failed to get message header size", remaining)?;
@@ -35,15 +58,10 @@ impl SmbMessageHeader {
             c_u16("Failed to get credit request/response", remaining)?;
         let (remaining, flags) = c_u32("Failed to get credit header flags", remaining)?;
         let (remaining, next_command) = c_u32("Failed to get next command", remaining)?;
-        let (remaining, message_id) = c_u32("Failed to get message id", remaining)?;
-        let (remaining, _) = c_u32("Failed to get padding", remaining)?;
-        let (remaining, async_id) = c_u32("Failed to get async id / reserved", remaining)?;
-        let (remaining, tree_id) = c_u32("Failed to get tree id / reserved", remaining)?;
-        let (remaining, session_id) = c_u32("Failed to get session id", remaining)?;
-        let (remaining, _) = c_u32("Failed to get padding", remaining)?;
-        let (remaining, signature) = c_u32("Failed to get signature", remaining)?;
-        let (remaining, _) =
-            context("Failed to get header end padding", bytes::take(12usize))(remaining)?;
+        let (remaining, message_id) = c_u64("Failed to get message id", remaining)?;
+        let (remaining, variant) = Self::parse_variant(remaining)?;
+        let (remaining, session_id) = c_u64("Failed to get session id", remaining)?;
+        let (remaining, signature) = c_u128("Failed to get signature", remaining)?;
 
         Ok((
             remaining,
@@ -57,10 +75,9 @@ impl SmbMessageHeader {
                 flags,
                 next_command,
                 message_id,
-                async_id: std::num::NonZeroU32::new(async_id),
-                tree_id,
                 session_id,
                 signature,
+                variant,
             },
         ))
     }
@@ -82,11 +99,14 @@ mod tests {
         );
     }
     #[test]
-    fn no_async_id() {
-        let header = [0; 64];
+    fn valid_tree_id() {
+        let mut header = [0; 64];
+        header[37] = 0x04;
         assert_eq!(
-            SmbMessageHeader::try_parse(&header).unwrap().1.async_id,
-            None
+            SmbMessageHeader::try_parse(&header).unwrap().1.variant,
+            SmbMessageHeaderVariant::Sync {
+                tree_id: u32::from_le_bytes([0x00, 0x04, 0x00, 0x00])
+            }
         );
     }
     #[test]
@@ -94,8 +114,11 @@ mod tests {
         let mut header = [0; 64];
         header[32] = 0xFF;
         assert_eq!(
-            SmbMessageHeader::try_parse(&header).unwrap().1.async_id,
-            std::num::NonZeroU32::new(u32::from_le_bytes([0xFF, 0, 0, 0]))
+            SmbMessageHeader::try_parse(&header).unwrap().1.variant,
+            SmbMessageHeaderVariant::Async {
+                id: std::num::NonZeroU64::new(u64::from_le_bytes([0xFF, 0, 0, 0, 0, 0, 0, 0]))
+                    .unwrap()
+            }
         );
     }
 }
