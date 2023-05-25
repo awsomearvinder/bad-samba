@@ -5,6 +5,9 @@ use nom::Parser;
 mod header;
 pub use header::SmbMessageHeader;
 
+mod negotiate;
+pub use negotiate::SmbNegotiate;
+
 fn get_u16_le(body: &[u8]) -> nom::IResult<&[u8], u16, nom::error::Error<&[u8]>> {
     bytes::take(2usize)
         .map(|number: &[u8]| u16::from_le_bytes(number.try_into().unwrap()))
