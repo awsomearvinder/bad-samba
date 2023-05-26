@@ -27,22 +27,26 @@ impl SmbMessageHeader {
     fn parse_variant<'a>(
         body: &'a [u8],
     ) -> nom::IResult<&[u8], SmbMessageHeaderVariant, nom::error::Error<&[u8]>> {
-        nom::branch::alt((
-            |body: &'a [u8]| {
-                let (remaining, _) = bytes::tag([0; 4])(body)?;
-                let (remaining, tree_id) = bytes::take(4usize)(remaining)?;
-                Ok((
-                    remaining,
-                    SmbMessageHeaderVariant::Sync {
-                        tree_id: u32::from_le_bytes(tree_id.try_into().unwrap()),
-                    },
-                ))
-            },
-            bytes::take(8usize).map(|id: &[u8]| SmbMessageHeaderVariant::Async {
-                id: std::num::NonZeroU64::new(u64::from_le_bytes(id.try_into().unwrap())).unwrap(),
-            }),
-        ))(body)
+        let get_sync = |body: &'a [u8]| {
+            // if the body starts with 4 zeros, the next 4 bytes
+            // is the tree id for the sync variant.
+            let (remaining, _) = bytes::tag([0; 4])(body)?;
+            bytes::take(4usize)
+                .map(|tree_id: &[u8]| SmbMessageHeaderVariant::Sync {
+                    tree_id: u32::from_le_bytes(tree_id.try_into().unwrap()),
+                })
+                .parse(remaining)
+        };
+
+        let get_async = bytes::take(8usize).map(|id: &[u8]| SmbMessageHeaderVariant::Async {
+            // the ID is stored in little endian byte order.
+            id: std::num::NonZeroU64::new(u64::from_le_bytes(id.try_into().unwrap())).unwrap(),
+        });
+        // try getting the sync variant, and if it fails, try getting
+        // the async
+        nom::branch::alt((get_sync, get_async))(body)
     }
+
     pub fn try_parse(
         body: &[u8],
     ) -> nom::IResult<&[u8], SmbMessageHeader, nom::error::Error<&[u8]>> {
