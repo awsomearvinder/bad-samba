@@ -1,6 +1,7 @@
 pipeline:
   build:
     image: git.public.arvinderd.com/bender/custom-rust:latest
+    pull: true
     commands:
       - cargo build
 
