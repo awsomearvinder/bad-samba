@@ -1,25 +1,22 @@
 pipeline:
   build:
-    image: rust:1.69-slim
+    image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
-      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo build
+      - cargo build
 
   test:
-    image: rust:1.69-slim
+    image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
-      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo test
+      - cargo test
 
   lint:
-    image: rust:1.69-slim
+    image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
-      - rustup component add rustfmt clippy
-      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo fmt -- --check --files-with-diff
-      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo clippy --no-deps
+      - cargo fmt -- --check --files-with-diff
+      - cargo clippy --no-deps
 
   # test with big-endian
   miri:
-    image: rust:1.69-slim
+    image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
-      - rustup toolchain install nightly --component miri
-      - rustup override set nightly
-      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo miri test --target mips64-unknown-linux-gnuabi64
+      - cargo +nightly miri test --target mips64-unknown-linux-gnuabi64
