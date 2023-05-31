@@ -1,23 +1,39 @@
+workspace:
+  base: /build
+
 pipeline:
+  configure_dir:
+    pull: true
+    image: git.public.arvinderd.com/bender/custom-rust:latest
+    commands:
+      - mkdir /build/cargo -p
+
   build:
     image: git.public.arvinderd.com/bender/custom-rust:latest
-    pull: true
     commands:
       - cargo build
+    environment:
+      CARGO_HOME: /build/cargo
 
   test:
     image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
       - cargo test
+    environment:
+      CARGO_HOME: /build/cargo
 
   lint:
     image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
       - cargo fmt -- --check --files-with-diff
       - cargo clippy --no-deps
+    environment:
+      CARGO_HOME: /build/cargo
 
   # test with big-endian
   miri:
     image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
       - cargo +nightly miri test --target mips64-unknown-linux-gnuabi64
+    environment:
+      CARGO_HOME: /build/cargo
