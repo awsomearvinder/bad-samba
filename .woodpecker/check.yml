@@ -26,7 +26,7 @@ pipeline:
     image: git.public.arvinderd.com/bender/custom-rust:latest
     commands:
       - cargo fmt -- --check --files-with-diff
-      - cargo clippy --no-deps
+      - cargo clippy --no-deps -- -Dwarnings
     environment:
       CARGO_HOME: /build/cargo
 
