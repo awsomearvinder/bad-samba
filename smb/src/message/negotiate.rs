@@ -100,7 +100,7 @@ impl SmbNegotiate {
             DialectDependantField::NegContext { offset, count } => {
                 context(
                     "Failed to parse negotiate context list",
-                    nom::multi::count(negotiate_context::parse_neg_context, count as _),
+                    nom::multi::count(negotiate_context::SmbNegotiateContext::parse, count as _),
                 )
                 .map(Some)
                 .parse(&body[(offset as usize - 64)..])?
