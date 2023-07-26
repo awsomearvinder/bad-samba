@@ -44,7 +44,7 @@
 
       devShell = pkgs.mkShell {
         inputsFrom = builtins.attrValues self.packages.${system};
-        buildInputs = [pkgs.cargo pkgs.rust-analyzer pkgs.clippy pkgs.rustfmt];
+        buildInputs = [pkgs.cargo pkgs.rust-analyzer pkgs.clippy pkgs.rustfmt pkgs.samba];
       };
     });
 }
