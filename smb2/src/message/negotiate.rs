@@ -62,7 +62,7 @@ impl SmbNegotiate {
             "Failed to get security mode",
             verify(
                 take(2usize).map(|bytes: &[u8]| u16::from_le_bytes(bytes.try_into().unwrap())),
-                |&i| (0x01..=0x02).contains(&i),
+                |&i| (0x01..=0x02).contains(dbg! {&i}),
             ),
         )(remaining)?;
         let security_mode = SmbSecurityMode::try_from(security_mode).unwrap();

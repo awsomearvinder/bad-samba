@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 smb = { path = "../smb" }
-tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "net"] }
+tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "net", "io-util"] }
