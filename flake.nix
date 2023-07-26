@@ -20,8 +20,6 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
 
-      crateName = "bad-samba";
-
       inherit
         (import "${crate2nix}/tools.nix" {inherit pkgs;})
         generatedCargoNix
@@ -29,7 +27,7 @@
 
       project =
         import (generatedCargoNix {
-          name = crateName;
+          name = "bad-samba";
           src = ./.;
         }) {
           inherit pkgs;
@@ -39,9 +37,10 @@
             };
         };
     in {
-      packages.${crateName} = project.rootCrate.build;
+      packages.smb-server = project.workspaceMembers.smb-server.build;
+      packages.smb2 = project.workspaceMembers.smb2.build;
 
-      defaultPackage = self.packages.${system}.${crateName};
+      defaultPackage = self.packages.${system}.smb-server;
 
       devShell = pkgs.mkShell {
         inputsFrom = builtins.attrValues self.packages.${system};

@@ -10,4 +10,5 @@
 [workspace]
 members = [
   "smb2",
+  "smb-server",
 ]

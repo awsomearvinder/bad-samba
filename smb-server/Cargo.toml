@@ -1,0 +1,10 @@
+[package]
+name = "smb-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+smb2 = { path = "../smb2" }
+tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros", "net"] }
