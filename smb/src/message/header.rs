@@ -53,7 +53,10 @@ impl SmbMessageHeader {
         use super::*;
 
         let (remaining, protocol_id) = c_u32("Failed to get protocol id", body)?;
-        let (remaining, header_size) = c_u16("Failed to get message header size", remaining)?;
+        let (remaining, header_size) = nom::combinator::verify(
+            |remaining| c_u16("Failed to get message header size", remaining),
+            |&s| s == 64,
+        )(remaining)?;
         let (remaining, credit_charge) = c_u16("Failed to get credit charge", remaining)?;
         let (remaining, status) =
             c_u32("Failed to get (ChannelSequence,Reserved)/Charge", remaining)?;
