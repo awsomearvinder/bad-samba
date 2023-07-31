@@ -9,6 +9,7 @@
 # binrw = "0.11.2"
 [workspace]
 members = [
+  "smb",
   "smb2",
   "smb-server",
 ]
