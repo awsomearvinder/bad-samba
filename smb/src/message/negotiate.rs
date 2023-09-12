@@ -34,7 +34,7 @@ pub struct Smb1NegotiateData {
 
 #[derive(Debug)]
 pub struct Smb1Dialect {
-    pub dialect_string: Vec<u8>,
+    pub dialect_string: String,
 }
 
 impl Smb1Dialect {
@@ -44,7 +44,7 @@ impl Smb1Dialect {
         Ok((
             &remaining[1..], // offset for the ending NUL byte
             Self {
-                dialect_string: dialect_string.to_vec(),
+                dialect_string: String::from_utf8_lossy(dialect_string).into(),
             },
         ))
     }
