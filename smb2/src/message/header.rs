@@ -24,6 +24,30 @@ pub enum SmbMessageHeaderVariant {
 }
 
 impl SmbMessageHeader {
+    pub fn to_vec(self) -> Vec<u8> {
+        let mut out = Vec::with_capacity(std::mem::size_of::<Self>());
+        out.extend(self.protocol_id.to_le_bytes());
+        out.extend(self.header_size.to_le_bytes());
+        out.extend(self.credit_charge.to_le_bytes());
+        out.extend(self.status.to_le_bytes());
+        out.extend(self.command.to_le_bytes());
+        out.extend(self.credit_request_response.to_le_bytes());
+        out.extend(self.flags.to_le_bytes());
+        out.extend(self.next_command.to_le_bytes());
+        out.extend(self.message_id.to_le_bytes());
+        match self.variant {
+            SmbMessageHeaderVariant::Sync { tree_id } => {
+                out.extend([0; 4]);
+                out.extend(tree_id.to_le_bytes());
+            }
+            SmbMessageHeaderVariant::Async { id } => {
+                out.extend(u64::from(id).to_le_bytes());
+            }
+        }
+        out.extend(self.session_id.to_le_bytes());
+        out.extend(self.signature.to_le_bytes());
+        out
+    }
     fn parse_variant<'a>(
         body: &'a [u8],
     ) -> nom::IResult<&[u8], SmbMessageHeaderVariant, nom::error::Error<&[u8]>> {
@@ -54,12 +78,13 @@ impl SmbMessageHeader {
 
         let (remaining, protocol_id) = c_u32("Failed to get protocol id", body)?;
         let (remaining, header_size) = nom::combinator::verify(
-            |remaining| c_u16("Failed to get message header size", remaining),
+            |remaining| dbg!(c_u16("Failed to get message header size", remaining)),
             |&s| s == 64,
         )(remaining)?;
         let (remaining, credit_charge) = c_u16("Failed to get credit charge", remaining)?;
         let (remaining, status) =
             c_u32("Failed to get (ChannelSequence,Reserved)/Charge", remaining)?;
+        println!("{status}");
         let (remaining, command) = c_u16("Failed to get command", remaining)?;
         let (remaining, credit_request_response) =
             c_u16("Failed to get credit request/response", remaining)?;

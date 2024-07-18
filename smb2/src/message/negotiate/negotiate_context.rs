@@ -44,12 +44,12 @@ impl SmbNegotiateContext {
                 let (remaining, salt) = take(salt_length)(remaining)?;
                 (
                     remaining,
-                    SmbNegotiateContextData::PreauthIntegrityCapabilities {
+                    dbg!(SmbNegotiateContextData::PreauthIntegrityCapabilities {
                         hash_algo_count,
                         salt_length,
                         hash_algo: hash_algorithms.collect(),
                         salt: salt.to_vec(),
-                    },
+                    }),
                 )
             }
             EncryptionCapabilities => {
@@ -164,6 +164,7 @@ impl SmbNegotiateContext {
 // I don't know if rust supports custom discriminators for non-C like enums,
 // though. And it'd be unsafe to do.
 #[repr(u16)]
+#[derive(Debug)]
 enum SmbNegotiateContextTypes {
     PreauthIntegrityCapabilies = 1,
     EncryptionCapabilities = 2,

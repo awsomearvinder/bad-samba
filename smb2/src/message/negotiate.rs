@@ -26,6 +26,48 @@ pub struct SmbNegotiate {
     pub negotiate_context_list: Option<Vec<SmbNegotiateContext>>,
 }
 
+#[derive(Debug)]
+pub struct SmbNegotiateResponse {
+    pub size: u16,
+    pub security_mode: u16,
+    pub dialect_rev: u16,
+    pub negotiate_context_count: u16,
+    pub server_guid: u128,
+    pub capabilities: u32,
+    pub max_transact_size: u32,
+    pub max_read_size: u32,
+    pub max_write_size: u32,
+    pub system_time: u64,
+    pub server_start_time: u32,
+    pub security_buff_offset: u16,
+    pub security_buff_len: u16,
+    pub neg_context_offset: u32,
+    pub buf: Vec<u8>,
+    pub context_list: Vec<u8>,
+}
+impl SmbNegotiateResponse {
+    pub fn to_vec(self) -> Vec<u8> {
+        let mut out = Vec::with_capacity(std::mem::size_of::<Self>());
+        out.extend(self.size.to_le_bytes());
+        out.extend(self.security_mode.to_le_bytes());
+        out.extend(self.dialect_rev.to_le_bytes());
+        out.extend(self.negotiate_context_count.to_le_bytes());
+        out.extend(self.server_guid.to_le_bytes());
+        out.extend(self.capabilities.to_le_bytes());
+        out.extend(self.max_transact_size.to_le_bytes());
+        out.extend(self.max_read_size.to_le_bytes());
+        out.extend(self.max_write_size.to_le_bytes());
+        out.extend(self.system_time.to_le_bytes());
+        out.extend(self.server_start_time.to_le_bytes());
+        out.extend(self.security_buff_offset.to_le_bytes());
+        out.extend(self.security_buff_len.to_le_bytes());
+        out.extend(self.neg_context_offset.to_le_bytes());
+        out.extend(self.buf);
+        out.extend(self.context_list);
+        out
+    }
+}
+
 #[repr(u16)]
 #[derive(Debug, PartialEq, Eq)]
 pub enum SmbSecurityMode {

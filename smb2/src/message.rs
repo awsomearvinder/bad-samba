@@ -4,9 +4,12 @@ use nom::Parser;
 
 mod header;
 pub use header::SmbMessageHeader;
+pub use header::SmbMessageHeaderVariant;
 
 mod negotiate;
 pub use negotiate::SmbNegotiate;
+
+pub use negotiate::SmbNegotiateResponse;
 
 #[derive(Debug)]
 pub struct SmbMessage {
@@ -17,6 +20,16 @@ pub struct SmbMessage {
 #[derive(Debug)]
 pub enum SmbBody {
     Negotiate(SmbNegotiate),
+    NegotiateResponse(SmbNegotiateResponse),
+}
+
+impl SmbBody {
+    fn to_vec(self) -> Vec<u8> {
+        match self {
+            SmbBody::NegotiateResponse(b) => b.to_vec(),
+            SmbBody::Negotiate(_) => todo!(),
+        }
+    }
 }
 
 impl SmbMessage {
@@ -31,6 +44,14 @@ impl SmbMessage {
             _ => todo! {},
         };
         Ok((remaining, Self { header, body }))
+    }
+    pub fn to_vec(self) -> Vec<u8> {
+        let mut header = self.header.to_vec();
+        let mut body = self.body.to_vec();
+        let mut out = Vec::with_capacity(header.len() + body.len());
+        out.extend(header);
+        out.extend(body);
+        out
     }
 }
 
